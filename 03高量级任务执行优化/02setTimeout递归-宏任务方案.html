@@ -1,0 +1,89 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-01-19 16:24:46
+ * @LastEditTime: 2024-01-19 17:24:44
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        .myDiv {
+            width: 100px;
+            height: 100px;
+            margin: 50px;
+            background-color: blue;
+            position: relative;
+            animation: my-animation 5s linear infinite;
+        }
+
+        @keyframes my-animation {
+            from {
+                left: 0%;
+                rotate: 0deg;
+            }
+
+            to {
+                left: 100%;
+                rotate: 360deg;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="myDiv"></div>
+    <button onclick="timeoutTask()">setTimeout递归方案</button>
+    <button onclick="timeoutTask2(longTask)">setTimeout方案2</button>
+    <script>
+        // 模拟耗时操作，大概10ms
+        function myFunc() {
+            const startTime = Date.now();
+            while (Date.now() - startTime < 10) { }
+        }
+
+        // 模拟耗时任务
+        function longTask() {
+            for (let i = 0; i < 300; i++) {
+                myFunc();
+            }
+        }
+
+
+
+        // setTimeout递归，人工地将耗时任务拆分为300个耗时操作 runTask(task)
+        // 原理：？？？
+        function timeoutTask(i, startTime) {
+            setTimeout(() => {
+                if (!startTime) {
+                    console.log("开始长任务");
+                    i = 0;
+                    startTime = Date.now();
+                }
+                if (i === 300) {
+                    console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+                    return;
+                }
+                myFunc();
+                timeoutTask(++i, startTime);
+            });
+        }
+
+        // 假设耗时任务很难人工拆分，那么是否可以使用setTimeout来保证流畅的动画效果同时完成任务。
+        function timeoutTask2(task) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    task();
+                    resolve();
+                }, 0);
+            });
+        }
+
+    </script>
+</body>
+
+</html>
