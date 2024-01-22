@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .myDiv {
+        width: 100px;
+        height: 100px;
+        margin: 50px;
+        background-color: blue;
+        position: relative;
+        animation: my-animation 5s linear infinite;
+      }
+      @keyframes my-animation {
+        from {
+          left: 0%;
+          rotate: 0deg;
+        }
+        to {
+          left: 100%;
+          rotate: 360deg;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="myDiv"></div>
+    <button onclick="longTask()">执行长任务</button>
+    <button onclick="timeOutTask()">setTimeout方案</button>
+    <button onclick="timeOutTask2()">setTimeout不递归方案</button>
+    <button onclick="callbackTask()">requestIdleCallback不递归方案</button>
+    <button onclick="workerTask()">Web Worker方案</button>
+    <script>
+      // 模拟耗时操作，大概10ms
+      function myFunc() {
+        const startTime = Date.now();
+        while (Date.now() - startTime < 10) {}
+      }
+
+      // 长任务，循环执行myFunc300次，耗时3秒左右
+      function longTask() {
+        console.log("开始长任务");
+        const startTime = Date.now();
+        for (let i = 0; i < 300; i++) {
+          myFunc();
+        }
+        console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+      }
+
+      // setTimeout方案 递归,循环300次
+      function timeOutTask(i, startTime) {
+        setTimeout(() => {
+          if (!startTime) {
+            console.log("开始长任务");
+            i = 0;
+            startTime = Date.now();
+          }
+          if (i === 300) {
+            console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+            return;
+          }
+          myFunc();
+          timeOutTask(++i, startTime);
+        });
+      }
+
+      // setTimeout不递归方案，循环300次
+      function timeOutTask2() {
+        console.log("开始长任务");
+        const startTime = Date.now();
+
+        for (let i = 0; i < 300; i++) {
+          setTimeout(() => {
+            myFunc();
+            if (i === 300 - 1) {
+              console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+            }
+          });
+        }
+      }
+
+      // requestIdleCallback不递归方案，循环300次
+      function callbackTask() {
+        console.log("开始长任务");
+        const startTime = Date.now();
+
+        for (let i = 0; i < 300; i++) {
+          requestIdleCallback(() => {
+            myFunc();
+            if (i === 300 - 1) {
+              console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+            }
+          });
+        }
+      }
+
+      // Web Worker 方案
+      function workerTask() {
+        console.log("开始长任务");
+        const startTime = Date.now();
+        const worker = new Worker("./task.js");
+
+        worker.addEventListener("message", (e) => {
+          console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+        });
+      }
+    </script>
+  </body>
+</html>

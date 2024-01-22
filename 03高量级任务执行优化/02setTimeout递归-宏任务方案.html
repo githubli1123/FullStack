@@ -56,6 +56,7 @@
 
 
         // setTimeout递归，人工地将耗时任务拆分为300个耗时操作 runTask(task)
+        // 正常
         // 原理：？？？
         function timeoutTask(i, startTime) {
             setTimeout(() => {
@@ -74,6 +75,7 @@
         }
 
         // 假设耗时任务很难人工拆分，那么是否可以使用setTimeout来保证流畅的动画效果同时完成任务。
+        // 阻塞
         function timeoutTask2(task) {
             return new Promise((resolve) => {
                 setTimeout(() => {
