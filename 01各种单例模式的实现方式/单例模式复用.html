@@ -1,0 +1,76 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-01-22 13:51:17
+ * @LastEditTime: 2024-01-22 14:19:11
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script>
+
+// 唯一性保证
+// 错误提示型
+// 用户反馈型
+
+// 单例模式 Java 实现
+// class JavaSingleton(){
+//     private constructor(){}
+//     private static _ins;
+//     public static createInstance(){
+//         if(!this._ins){
+//             this._ins = new JavaSingleton();
+//         }
+//         return this._ins;
+//     }
+// }
+
+// 单例模式 JavaScript 实现
+// 法一：借助模块缓存，返回一个实例对象。但是可以借助 constructor 拿到原型
+// 法二：代理
+
+class A{
+
+}
+
+function Singleton(className){
+    let ins;
+    let parameters;
+    
+    function isSame(params1, params2){
+        if(params1.length !== params2.length) return false;
+        for(let i = 0; i < params1.length; i++){
+            if(params1[i] !== params2[i]) return false;
+        }
+        return true;
+    }
+
+    return new Proxy(className,{
+        construct(target, args){
+            if(!ins){
+                // ins = Reflect.construct(target, ...args);
+                // ?这里需要保证 className 是一个类，而不是一个函数。否则无法保证唯一性。
+                ins = new className(target, ...args); 
+                parameters = args;
+            }
+            // if(isSame(args, parameters)) throw new Error('参数不一致');
+            return ins;
+        }
+    });
+}
+
+// 使用
+let A_proxy = Singleton(A);
+let a = new A_proxy();
+let b = new A_proxy();
+console.log(a);console.log(b)
+console.log( a === b); // true
+
+</script>
+</body>
+</html>

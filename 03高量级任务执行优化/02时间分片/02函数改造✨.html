@@ -1,7 +1,7 @@
 <!--
  * @Author: ZJ Wu
  * @Date: 2024-01-19 16:19:16
- * @LastEditTime: 2024-01-19 16:42:27
+ * @LastEditTime: 2024-01-22 15:21:54
  * @Description: 
 -->
 <!DOCTYPE html>
@@ -18,7 +18,7 @@
             }
 
             to {
-                left: 100%;
+                left: 90%;
             }
         }
 
@@ -37,10 +37,21 @@
     <script>
         // generator 处理原来的函数
         function * longTask() {
+            let time = 3000;
             let i = 0
             const start = performance.now()
-            while (performance.now() - start <= 5000) {
-                yield i++
+            let a,b;
+            while (performance.now() - start <= time) {
+                // 以下逻辑是为了验证是不是真的执行了3s
+                // if(!a&&!b){ a = performance.now(); yield i+=a-start;}
+                // else if(a&&!b){ b = performance.now(); yield i+=b-a;}
+                // else{
+                //     b = a;
+                //     a = performance.now();
+                //     console.log(a-b)
+                //     yield i+=a-b;
+                // }
+                yield i += 1;
             }
             return i
         }

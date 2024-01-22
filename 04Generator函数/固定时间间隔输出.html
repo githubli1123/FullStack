@@ -1,0 +1,39 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-01-22 15:05:33
+ * @LastEditTime: 2024-01-22 15:27:56
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>固定时间间隔输出</title>
+</head>
+<body>
+<script>
+
+// 生成器函数的应用：
+// Reaction中Redux-Saga(DVA)中间件，就是生成器函数的典型应用场景
+// 需求: 每间隔1秒按照顺序输出1，2，3，4，5
+
+
+// 下面的代码会在 1s 后全部输出
+// for(let i=0; i<5; i++){
+//     setTimeout(() => {
+//         console.log(i)
+//     }, 1000);
+// }
+
+
+// ?
+for (var i = 1; i <= 5; i++) {
+    setTimeout(function timer() {
+        console.log(i);
+    }, i * 1000);
+}
+
+</script>
+</body>
+</html>
