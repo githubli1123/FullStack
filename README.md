@@ -10,3 +10,11 @@
 解决方案：能不能找到一条主线，比如说我以浏览器的工作原理为基础，去不断了解宏任务、for循环与var let与setTimeout的搭配导致的各种不同输出情况（作用域）、generator函数如何异步如何在浏览器中执行、promise对象是微任务吧是不是可以和generator函数搭配实现一些特殊效果（时间切片）。
 
 是不是还有一种东西叫做 JavaScript引擎的执行原理 https://docs.chenfangxu.com/javascript/utility/javascript-runing.html 这东西是不是可以让我更加正确地在脑子中推演代码的执行过程。
+
+
+
+
+
+
+
+[前端自己整理的学习面试笔记_replace' of undefined at :1:16-CSDN博客](https://blog.csdn.net/a240437337/article/details/135904741)
