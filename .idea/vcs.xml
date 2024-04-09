@@ -2,5 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/07Chrome扩展开发/chrome_extensions_and_apps_programming" vcs="Git" />
   </component>
 </project>
