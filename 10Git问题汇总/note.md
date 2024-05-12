@@ -34,3 +34,46 @@ You are currently editing a commit while rebasing branch 'master' on ...
 
 原文链接：https://blog.csdn.net/CYK_byte/article/details/128970712
 
+
+
+
+
+## error:Your local changes to the following files would be overwritten by merge
+
+### 问题产生的原因
+
+用 `git pull` 来更新代码的时候，遇到了以下报错信息：
+error:Your local changes to the following files would be overwritten by merge: xxx Please, commit your changes or stash them before you can merge. Aborting
+
+原因分析：出现这个问题的原因是，其他人修改了xxx文件并提交到版本库中，而你本地恰好也修改了这个文件。这个时候执行 git pull 时就产生冲突了。
+
+### 解决方法
+
+解决这个问题有以下两个方案：
+（1）🚫删除本地代码再执行git pull(不推荐，本地代码被覆盖，等于工作白干)
+（2）✔️通过git stash 将工作区恢复到上次提交到内容，同时备份到本地所做到修改，之后就可以正常git pull了，git pull完成后，执行git bash pop将之前本地做的修改应用到当前工作区。
+
+```
+git stash
+git pull
+git stash pop
+```
+
+### 总结
+这里解释一下这三行代码到意思吧；
+`git stash` 备份当前的工作内容区的内容，从最近的一次提交中读取相关内容，让工作区保证和上次提交的内容一致。同时，将当前的工作区内容保存到git栈中。
+
+`git pull` 拉取服务器上的代码；
+
+`git stash pop` 从git栈中读取最近一次保存的内容，恢复工作区的相关内容。由于可能存在多个stash的内容，所以用栈来管理，pop会从最近的一个stash中读取内容并恢复。
+
+`git stash list`显示git栈内的所有备份，可以利用这个列表来决定从哪个地方恢复。
+
+`git stash clear` 清空git栈。此时若使用git相关的图形化工具会发现，原来的那些结点就消失了。
+———————————————
+
+原文链接：https://blog.csdn.net/StoneVivi/article/details/114809766
+
+### 还是出了问题
+
+主要会在执行 `git stash pop` 时出现问题。
