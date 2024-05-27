@@ -1,7 +1,7 @@
 <!--
  * @Author: ZJ Wu
  * @Date: 2024-01-19 16:19:16
- * @LastEditTime: 2024-01-22 15:21:54
+ * @LastEditTime: 2024-05-27 17:00:40
  * @Description: 
 -->
 <!DOCTYPE html>
@@ -53,10 +53,10 @@
                 // }
                 yield i += 1;
             }
-            return i
+            return i;
         }
 
-        // 简易时间分片
+        // 简易任务分片执行
         function timeSlice(fnc, cb = setTimeout) {
             if (fnc.constructor.name !== 'GeneratorFunction') return fnc()
 
