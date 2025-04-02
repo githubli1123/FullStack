@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 在 V8 引擎下测试
+
+        // async function testC() { 
+        //     return Promise.resolve();
+        // } 
+        // testC().then(() => console.log(1));
+        // 等价1
+        new Promise((resolve) => {resolve();})
+        .then(() => {
+                return new Promise((resolve) => {
+                    resolve();
+                })
+            })
+        .then(() => console.log(1));
+        // 等价2
+        // Promise.resolve()
+        //     .then(() => {
+        //         return Promise.resolve();
+        //     })
+        //     .then(() => console.log(1));
+        // 假装看成
+        // new Promise((resolve)=>{
+        //     // 状态未定
+        // }).then(()=> {
+        //     // Promise 的状态需要看那个新 Promise 返回的 Promise 状态。
+        //     // 微任务中加入这个任务 {将 {设置外层Promise状态的任务（函数）} 推入到微任务中}
+        // }).then(()=>{
+        //     // 微任务中加入这个任务 {设置外层Promise状态的任务（函数）}
+        // })
+    
+        Promise.resolve()
+            .then(() => console.log(2))
+            .then(() => console.log(3))
+            .then(() => console.log(4))
+            .then(() => console.log(5));
+        // 2 3 1
+    </script>
+</body>
+</html>
