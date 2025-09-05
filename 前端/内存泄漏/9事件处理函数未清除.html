@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3事件没有清除</title>
+  </head>
+  <body>
+    点击事件没有清除：
+    removeEventListener()方法用于移除事件监听器，它接受两个参数，第一个参数是事件类型，第二个参数是事件处理函数。
+    这个事件处理函数在作为参数传递给addEventListener()方法时，一般情况下表示这个事件处理函数我再也用不到了。
+    那么就需要置空，否则这个事件处理函数会一直存在内存中，造成内存泄漏。
+    <button>点我创建闭包</button>
+    <script>
+      function outer() {
+        // 超级大的数据
+        const a = new Array(100_0000).fill(1);
+        function inner() {
+          a; // 使用a
+        }
+        return inner;
+      }
+      const foo = outer();
+      document.querySelector("button").addEventListener("click", foo);
+
+      setTimeout(() => {
+        document.querySelector("button").removeEventListener("click", foo);
+        // foo = null;  // 没有置空，导致内存泄漏
+      }, 3000)
+      // 如果你以后依然需要使用 foo 中的数据，那就是正常的，因为闭包会保存数据，只不过是内存占用较大而已
+      // 但是如果你以后不再需要使用 foo 中的数据，那么就应该及时释放内存，那就是内存泄漏
+    </script>
+  </body>
+</html>

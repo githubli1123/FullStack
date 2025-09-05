@@ -1,0 +1,108 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-01-19 16:19:16
+ * @LastEditTime: 2024-05-27 16:36:55
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        @keyframes move {
+            from {
+                left: 0;
+            }
+
+            to {
+                left: 90%;
+            }
+        }
+
+        .move {
+            position: absolute;
+            top: 45px;
+            animation: move 5s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="move">移动的字</div>
+    <button onclick="runTask(longTask)">函数改造✨</button>
+
+    <script>
+        function operation1() {
+            const startTime = Date.now();
+            while (Date.now() - startTime < 18) { }
+        }
+        function operation2() {
+            const startTime = Date.now();
+            while (Date.now() - startTime < 10) { }
+        }
+        function * task1() {
+            const startTime = Date.now();
+            for (let i = 0; i < 200; i++) {
+                console.log('myFunc1');
+                yield operation1();
+            }
+        }
+        function * task2() {
+            const startTime = Date.now();
+            for (let i = 0; i < 200; i++) {
+                console.log('myFunc2');
+                yield operation2();
+            }
+        }
+        function * longTask(myFunc) {
+            const fnc_ = myFunc;console.log('longTask');
+            yield * task1();
+            yield * task2();
+        }
+
+        /**
+         * 简易任务分片执行
+         * @param {*} fnc 需要被分片执行的任务
+         * @param {*} cb 
+         * @returns 一个异步函数
+        */
+        function timeSlice(fnc, cb = setTimeout) {
+            if (fnc.constructor.name !== 'GeneratorFunction') return fnc()
+
+            return async function (...args) {
+                const iterator = fnc(...args); // 执行这个generator函数，返回一个迭代器
+                let data
+
+                do {
+                    data = iterator.next(await data?.value);
+                    // 每执行一步就休眠，注册一个宏任务 setTimeout 来叫醒他
+                    await new Promise(resolve => cb(resolve));
+                } while (!data.done)
+
+                return data.value;
+            }
+        }
+
+        async function runTask(fnc_) {
+            const fnc = timeSlice(fnc_); console.dir(fnc)
+
+            const start = performance.now()
+            console.log('开始')
+            const num = await fnc()  // 执行经过时间分片的任务
+            console.log('结束', `${(performance.now() - start) / 1000}s`)
+            console.log(num)
+        }
+
+
+        /*
+            generator 函数中 yield 的位置非常关键，需要放到耗时的地方，
+            可以不断分割任务的，代价也许是代码量会变多，但是如果某一个操作耗时超过16ms，
+            那么这个操作就应当被分割，否则就会阻塞主线程，导致页面卡顿。
+        */
+    </script>
+</body>
+
+</html>

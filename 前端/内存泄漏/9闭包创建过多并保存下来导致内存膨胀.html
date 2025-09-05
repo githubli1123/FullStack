@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1闭包创建过多并保存下来导致内存膨胀</title>
+  </head>
+  <body>
+    <button>点我创建闭包</button>
+    <script>
+      function outer() {
+        // 超级大的数据
+        const a = new Array(100_0000).fill(1);
+        function inner() {
+          a; // 使用a
+        }
+        return inner;
+      }
+      const foo = {}; // 用于存储闭包
+      document.querySelector("button").addEventListener("click", () => {
+        foo[Math.random()+'_'+Math.random()] = outer();
+      });
+
+      // 如果你以后依然需要使用 foo 中的数据，那就是正常的，因为闭包会保存数据，只不过是内存占用较大而已
+      // 但是如果你以后不再需要使用 foo 中的数据，那么就应该及时释放内存，那就是内存泄漏
+    </script>
+  </body>
+</html>

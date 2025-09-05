@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>OpenLayers 简单示例</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css" />
+  <style>
+    #map {
+      width: 100%;
+      height: 80vh;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>OpenLayers 简单示例</h2> <button id="add">添加管网</button>
+  <div id="map"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+  <script src='./line.js'>
+  </script>
+  <script>
+    console.log(line);
+    let map;
+    initLayer();
+
+    function initLayer() {
+      // 创建一个点要素
+      const pointFeature = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([116.3975, 39.9087])) // 北京
+      });
+      pointFeature.setStyle(new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 7,
+          fill: new ol.style.Fill({ color: 'red' }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 2 })
+        })
+      }));
+      const vectorLayer2 = new ol.layer.Vector({
+        source: new ol.source.Vector({
+          features: [pointFeature]
+        })
+      });
+
+      // Vector Layer
+      // 创建地图
+      map = new ol.Map({
+        target: 'map', // 容器 id
+        layers: [
+          // new ol.layer.Tile({
+          //   source: new ol.source.OSM() // OSM 底图
+          // }),
+          vectorLayer2,
+        ],
+        view: new ol.View({
+          // 东经116°53′至118°09′，北纬23°32′至25°13′
+          center: ol.proj.fromLonLat([117.53, 24.5087]), // 地图中心
+          zoom: 10
+        })
+      });
+    }
+
+
+    //   污水管网
+    const url = "http://124.70.195.185:8080/geoserver/zhangzhou/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=zhangzhou:sewagepipeline&maxFeatures=50000&outputFormat=application/json";
+    function 添加管网() {
+      // fetch(url).then((res) => res.json()).then((json) => {
+      //   添加(json);
+      // });
+      添加(line);
+    }
+    let vectorSource;
+    let count = 0;
+    const highlightTypeEnum = {
+      notHighlight: "notHighlight",
+      highlight: "highlight",
+    }
+    function 添加(geojson) {
+      vectorSource = new ol.source.Vector({
+        features: new ol.format.GeoJSON().readFeatures(geojson, {
+          dataProjection: 'EPSG:4326',  // 数据坐标系
+          featureProjection: 'EPSG:3857' // 地图坐标系
+        }),
+      });
+      // 给每一个 feature 赋予默认属性时建议也用 set()
+      function 把所有要素设置为未高亮状态(feature) {
+        feature.set("highlightType", highlightTypeEnum.notHighlight);
+      }
+      vectorSource.getFeatures().forEach(把所有要素设置为未高亮状态);
+      // 给每一个 feature 赋予一个 highlightType 字段，根据该字段来渲染图形 style
+      const vectorLayer = new ol.layer.WebGLVector({
+        source: vectorSource,
+        style: {
+          "stroke-width": 8,
+          "stroke-color": [
+            "match",
+            ["get", "highlightType"],
+            "notHighlight",
+            "rgba(25,25,25,0.5)",
+            "highlight",
+            "rgba(255, 0, 0, 0.5)",
+            /* default */ "rgba(255, 255, 0, 0.9)",
+          ],
+        },
+        // styleVariables: {
+        //   notHighlightColor: "rgba(0, 255, 0, 0.9)", // 初始为绿色
+        //   highlightColor: "rgba(255, 0, 0, 0.9)", // 红色
+        // },
+      });
+
+      map.addLayer(vectorLayer);
+
+      // 添加悬浮事件
+      map.on('pointermove', (evt) => {
+        const hoveredFeature = map.forEachFeatureAtPixel(
+          evt.pixel,
+          (feature) => feature
+        );
+        if (count % 1 === 0) {
+          highlightFeatures(vectorSource, evt);
+        }
+        count++;
+
+      });
+    }
+    document.getElementById("add").onclick = 添加管网;
+
+    function highlightFeatures(source, evt) {
+
+      // 获取当前悬浮的要素
+      const hoveredFeature = map.forEachFeatureAtPixel(
+        evt.pixel,
+        (feature) => feature
+      );
+
+      clearHoverEffects();
+
+      // 从后端获取
+      // fetchPipelineData(hoveredFeature);
+      // 前端计算
+      let foo = findPreviousPipelines(vectorSource.getFeatures(), hoveredFeature);
+      // console.log('findPreviousPipelines', foo);
+      把数组参数中的feature变更为高亮类型(foo);
+
+      // WebGLVector 会自动刷新
+    }
+    function clearHoverEffects() {
+      // 遍历 vectorSource
+      vectorSource.getFeatures().forEach(f => {
+        f.set('highlightType', highlightTypeEnum.notHighlight)
+      })
+    }
+
+    function 把数组参数中的feature变更为高亮类型(features) {
+      features.forEach(f => {
+        f.set('highlightType', highlightTypeEnum.highlight)
+      })
+    }
+
+    function fetchPipelineData(feature) {
+      const nodeId = { outletNode: feature.get("outletnode") };
+      getLineList(nodeId, '').then((res) => {
+        // debugger;
+        // console.log(res.data);
+        let targetFeatures = vectorSource.getFeatures();
+        // 拆解高亮(targetFeatures, res.data.Pipelines)
+        const now = Date.now();
+        targetFeatures.forEach((v) => {
+          if (res.data.Pipelines.includes(v.get("name"))) {
+            const startTime = performance.now();
+            v.set("highlightType", highlightTypeEnum.highlight);
+            // highlightedLineFeatures.value.push(v);
+            const endTime = performance.now();
+            // console.log(`耗时: ${(endTime - startTime)} ms`);
+          } else {
+            v.set("highlightType", highlightTypeEnum.notHighlight);
+          }
+        });
+        // console.log(`总体耗时: ${(Date.now() - now)} ms`);
+      });
+    }
+
+    function getLineList(params, token) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        // 拼接 query 参数
+        const query = new URLSearchParams(params).toString();
+        const url = `http://47.96.134.230:8083/api/v1/model/swmm/trace/sewage${query ? `?${query}` : ""}`;
+
+        xhr.open("GET", url, true);
+
+        // 设置 header（带 token）
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.setRequestHeader("Content-Type", "application/json");
+
+        // 监听响应
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve(JSON.parse(xhr.responseText));
+              } catch (e) {
+                resolve(xhr.responseText);
+              }
+            } else {
+              reject(new Error(`Request failed with status ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.send();
+      });
+    }
+
+
+    /** 
+     * 当前 feature 有一个进水口， 按照这个进水口 inletnode 去找
+     * 那些 feature 中出水口 outletnode 为 inletnode 的，可能会有多个，然后
+     * 递归这个过程，不断把 找到的 feature 添加到 result 中
+     * */
+    function findPreviousPipelines_(features, startFeature) {
+      const allFeatures = features;
+
+      const result = [startFeature];
+      const 待查找数组 = [startFeature]; // 存储待查找的feature
+      function 从待查找数组中找到其中一个管线的前置管线(feature) {
+        if (待查找数组.length === 0) {
+          return;
+        }
+        const inletId = feature.get("inletnode");
+        allFeatures.forEach(f => {
+          if (f.get("outletnode") === inletId) {
+            result.push(f);
+            待查找数组.push(f);
+          }
+        });
+        // 从 待查找数组 中去除掉这个 feature
+        const index = 待查找数组.indexOf(feature);
+        if (index > -1) {
+          待查找数组.splice(index, 1);
+        }
+
+        if (待查找数组.length > 0) {
+          从待查找数组中找到其中一个管线的前置管线(待查找数组[0]);
+        }
+      }
+      // const featureMap = new Map(); // id -> feature
+      // const outletMap = new Map();  // outletnode -> [features]
+
+      // // 建立索引
+      // for (const f of features) {
+      //   featureMap.set(f.id, f);
+      //   const outletId = f.get("outletnode");
+      //   if (!outletMap.has(outletId)) {
+      //     outletMap.set(outletId, []);
+      //   }
+      //   outletMap.get(outletId).push(f);
+      // }
+
+      // const visited = new Set();
+
+      // function dfs(currentFeature) {
+      //   const inlet = currentFeature.get("inletnode");
+      //   // 找到所有 outletnode == inlet 的前置管线
+      //   const prevList = outletMap.get(inlet) || [];
+      //   for (const prev of prevList) {
+      //     if (!visited.has(prev.id)) {
+      //       visited.add(prev.id);
+      //       result.push(prev);
+      //       dfs(prev);
+      //     }
+      //   }
+      // }
+
+      从待查找数组中找到其中一个管线的前置管线(待查找数组[0]);
+
+      return result;
+    }
+
+    function findPreviousPipelines(features, startFeature) {
+      const allFeatures = features;
+
+      const result = [startFeature];
+      const stack = [startFeature]; // 显式栈，用来存待查找的 feature
+
+      while (stack.length > 0) {
+        const current = stack.pop(); // 弹出一个待查找的管线
+        const inletId = current.get("inletnode");
+
+        // 找到所有前置管线
+        allFeatures.forEach(f => {
+          if (f.get("outletnode") === inletId && !result.includes(f)) {
+            result.push(f);
+            stack.push(f); // 压栈，等待继续往上查
+          }
+        });
+      }
+
+      return result;
+    }
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单向绑定</title>
+</head>
+<body>
+    <input type="text" id="input"/>
+    <div id="txt" style="border: 1px solid #000; width: 200px; height: 200px; margin-top: 10px;"></div>
+    <script>
+        // 方式1
+        let input = document.getElementById('input');
+        let div = document.getElementById('txt');
+        let old = input.value;
+        let raf = function(){
+            if(old !== input.value){
+                old = input.value;
+                div.innerText = input.value;
+            }
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // 方式2
+        // let input = document.getElementById('input');
+        // let div = document.getElementById('txt');
+        // let old = input.value;
+        // let raf = function(){
+        //     requestAnimationFrame(()=>{
+        //         console.log('requestAnimationFrame');
+        //         if(old !== input.value){
+        //             old = input.value;
+        //             div.innerText = input.value;
+        //
+        requestAnimationFrame(raf);
+    </script>
+</body>
+</html>

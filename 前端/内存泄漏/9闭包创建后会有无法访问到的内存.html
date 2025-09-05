@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2闭包创建后会有无法访问到的内存</title>
+  </head>
+  <body>
+    当多个函数共享词法环境时，可能导致词法环境的膨胀，从而导致出现无法访问且无法回收地内存空间。
+    <p>
+      -----------------------------------------------------------------------------
+    </p>
+    <h style="color: red">疑问：在使用 devtool 的 memory 工具的时候，会出现：选择 JavaScript 虚拟机实例那一栏下面的数字是 38 MB ，
+    然后点击按钮后可以看到红色箭头，并且有 2MB/S ，然后 38MB 涨到 150MB ，接着过一会就掉了下来到38MB了。但是查看任务管理器内存占用很高，明显是内存没有清理好
+    </h>
+    <p style="color: green">
+      回答：经过试验，是 DOM。仔细看代码，发现创建的 DOM 元素没有添加到 DOM 树中。系统内存没有收回，但是 JavaScript 虚拟机实例内存回收了。
+    </p>
+    <p>
+      -----------------------------------------------------------------------------
+    </p>
+    <button id="create">点我创建闭包</button>
+    <button id="clean">点我清除闭包实例</button>
+    <script>
+      let create = document.getElementById("create");
+      let clean = document.getElementById("clean");
+
+      function closure() {
+        let tinyData = { name: "tinyData" };
+        const largeData = new Array(1000_0000)
+          .fill(0)
+          .forEach((item, index) => {
+            const dom = document.createElement("div");
+            dom.innerText = index;
+            return dom;
+          });
+        function tinyFn() {
+          // if (largeData) largeData = null;
+          console.log(tinyData); // 引用 tinyData
+        }
+        function largeFn() {
+          console.log(largeData); // 引用 largeData
+        }
+        return tinyFn;
+      }
+
+      let store = [];
+      create.addEventListener("click", function () {
+        console.log("创建闭包");
+        store.push(closure());
+        // 此时， store 是有用的，开发者后面还需要使用，但是 store 中的 largeData 依然留在内存中，但是开发者却再也无法访问到它
+        // 那么， largeData 就是垃圾，应该被回收，但是它却因为闭包的存在而无法被回收，那浏览器为啥这么笨，不回收这个垃圾呢？
+        // 那我不知道哈哈
+      });
+
+      clean.addEventListener("click", function () {
+        console.log("清除闭包实例");
+      });
+    </script>
+  </body>
+</html>

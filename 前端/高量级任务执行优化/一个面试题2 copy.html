@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button id="invokebtn" onclick="clickTask()">执行耗时任务</button>
+    <span id="time"></span>
+    <span id="task"></span>
+    <script>
+        /*
+            场景简化：确定写好了一个小耗时任务，这个tinyTask会多次执行，我们已经写好了runTask函数，
+            需求：要在runTask函数中做一些事情，使得tinyTask能够不连续执行，避免阻塞。
+
+            看02文件夹中的03文件，可以发现对长任务longTask做了一些改动，但是任务相关的代码改动最小。把longTask
+            丢给一个通用的任务切片函数，如何切片是longTask函数中yield决定的。yield的位置很重要。下回需要处理一个
+            新的长任务，只需要考虑在何处写yield就可以了。而且还可以不断拆分小任务到小小任务。任务的执行代码也是固定的。
+
+            看本例子的代码，改动了运行函数，如果有多个不同的耗时任务，需要再多次书写runTask函数。感觉很割裂，相关联的任务
+            应该是一个任务函数，写在一个任务函数里，执行任务的函数从我的习惯上应该是只需要书写一次。
+            多次 run tinyTask，难道不是多个tinytask组合为一个长task吗？为什么要这样多次run tinyTask呢？
+            为什么不先组合一个长task，然后再仅一次run这个长task呢？这样任务就是任务，执行任务就是执行任务，多次执行同一任务是
+            什么匪夷所思的操作？
+        */
+
+        // 耗时小任务，被拆分的，给定的
+        function tinyTask() {
+            for (let j = 0; j < 500; j++) {
+                // console.log(i + ' ' + j)
+                document.getElementById('task').innerText = i + '-' + j;
+            }
+        }
+
+        function _runTask(tinyTask, callback,i) {
+            // 兼容性不好，safari不兼容
+            requestIdleCallback((idle) => {
+                // 判断主线程执行完，是否还有剩余时间
+                if (idle.timeRemaining() > 0) {
+                    tinyTask();
+                    callback();
+                } else {
+                    console.log(`no execute,${i}`)
+                    _runTask(tinyTask, callback);
+                }
+            })
+        }
+        function _runTask_compatibleVersion(tinyTask, callback) {
+            // 自己实现是否有空余时间
+            let start = Date.now();
+            requestAnimationFrame((idle) => {
+                // 判断主线程执行完，是否还有剩余时间
+                let diff = Date.now() - start;
+                // console.log(diff)
+                if (diff < 16.6) {
+                    tinyTask();
+                    callback();
+                } else {
+                    _runTask(tinyTask, callback);
+                }
+            })
+        }
+
+        // 执行一个任务，要求异步执行任务，返回Promise
+        // 要尽快完成任务，同时不能让页面卡顿
+        // 尽量兼容更多浏览器
+        function runTask(tinyTask, i) {
+            return new Promise((resolve) => {
+                // 1.放入微队列， 还是会堵塞
+                // Promise.resolve().then(() => {
+                //     task()
+                //     resolve()
+                // })
+
+                // 2.宏任务队列
+                // 取出宏队列第一个任务
+                // 执行任务
+                // 判断是否达到渲染时间，达到了，渲染
+                // setTimeout(() => {
+                //     task()
+                //     resolve
+                // }, 0)
+
+                _runTask(tinyTask, resolve,i);
+            });
+        }
+        let arr = [];
+        let arr2 = [];
+        // 耗时大任务 longTask
+
+        function clickTask() {
+            for (let i = 0; i < 1000; i++) {
+                function a() {
+                    for (let j = 0; j < 20; j++) {
+                        // const startTime = Date.now();
+                        // while (Date.now() - startTime < 0.1) { }
+
+                        let txt = i + '-' + j;
+                        arr.push(txt)
+                        document.getElementById('task').innerText = txt;// 较为耗时
+                        arr2.push(document.getElementById('task').innerText)
+                        // 看arr，可以看出确实都是执行了，不多不少，但是i和j的顺序除了问题。这是为什么？
+                    }
+                }
+                runTask(a,i);
+            }
+            // 可能是没有找到合适的时机执行就搁置了，导致顺序错乱？经过验证是这样的。
+            setTimeout(() => {
+                arrTotxt(arr);
+                arrTotxt(arr2);
+            }, 5000);
+
+        }
+
+        // 主任务
+        // let i = 0;
+        // setInterval(() => {
+        //     document.getElementById('time').innerText = i++;
+        // }, 10);
+
+        function arrTotxt(arr) {
+            // 定义一个数组
+            var array = arr;
+
+            // 将数组转换为字符串
+            var content = array.join(',');
+
+            // 创建Blob对象
+            var blob = new Blob([content], { type: 'text/plain' });
+
+            // 创建临时URL
+            var url = URL.createObjectURL(blob);
+
+            // 创建链接元素
+            var link = document.createElement('a');
+            link.download = 'array.txt'; // 设置下载属性
+            link.href = url; // 设置链接地址
+
+            // 将链接元素添加到页面中
+            document.body.appendChild(link);
+
+            // 模拟用户点击下载
+            link.click();
+
+            // 释放临时URL
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
+</html>

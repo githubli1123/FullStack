@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>使用堆快照发现分离的 DOM 树内存泄露</title>
+</head>
+
+<body>
+    <div>
+        只有当页面的 DOM 树或 JavaScript 代码中没有对 DOM 节点的引用时，系统才会对其进行垃圾回收。
+        当节点从 DOM 树中移除，但仍有 JavaScript 引用它时，该节点被称为“分离”节点。
+        分离的 DOM 节点是导致内存泄露的常见原因。本部分介绍了如何使用 DevTools 的堆性能分析器来识别分离的节点。
+    </div>
+
+    <p>
+        -----------------------------------------------------------------------------------------------------------
+    </p>
+    现在，我们来分析一下代码与屏幕截图的对比情况。如果您查看节点计数器（绿色图表），就会发现它与代码完全匹配。
+    <div>
+        1. 点击代码中引用的按钮会创建一个包含 10 个 li 子项的 ul 节点。这些节点由代码引用，但不存在于 DOM 树中，因此会分离。
+    </div>
+    <div>
+        2. 堆快照是识别分离节点的一种方法。顾名思义，堆快照会显示在快照时间点内存如何在网页的 JS 对象和 DOM 节点之间分配。
+    </div>
+    <div>
+        3. 在类过滤条件输入框中输入 Detached，以搜索分离的 DOM 树。
+    </div>
+    <div>
+        4. 点击某个节点可进一步调查。在 Objects 窗格中，您可以详细了解引用该对象的代码。
+        例如，在以下屏幕截图中，您可以看到 detachedTree 变量引用了该节点。
+        <span style="color:rgb(5, 126, 23)">如需修复此特定内存泄漏问题，您需要研究使用 detachedTree 的代码，并确保在不再需要时移除对节点的引用。</span>
+    </div>
+    <p>
+        ------------------------------------------------------------------------------------------------------------
+    </p>
+    <div><button id="create">点我创建一个包含 10 个 li 子项的 ul 节点。这些节点由代码引用，但不存在于 DOM 树中，因此会分离</button></div>
+    <script>
+        let detachedTree;
+
+        function create() {
+            let ul = document.createElement('ul');
+            for (let i = 0; i < 10; i++) {
+                let li = document.createElement('li');
+                ul.appendChild(li);
+            }
+            detachedTree = ul;
+        }
+
+        document.getElementById('create').addEventListener('click', create);
+    </script>
+</body>
+
+</html>

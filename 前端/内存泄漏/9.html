@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>内存泄漏演示</title>
+</head>
+<body>
+  <button id="leak">点我每秒疯狂制造内存泄漏</button>
+  <button id="stop">停止制造内存泄漏</button>
+  <button id="clean">清理引用</button>
+  <p>打开 DevTools → Memory 或任务管理器观察内存变化</p>
+
+  <script>
+    const leakBtn = document.getElementById('leak');
+    const stopBtn = document.getElementById('stop');
+    const cleanBtn = document.getElementById('clean');
+
+    // 全局变量保存闭包引用，防止被 GC
+    let leakyStore = [];
+    let interval;
+
+    function createLeakClosure() {
+      // 创建一个大对象（大数组或大字符串）
+      const largeData = new Array(100_000).fill('leak');
+
+      // 返回闭包，持有 largeData 的引用
+      return function leakyFunction() {
+        console.log(largeData[0]); // 保证闭包引用有效
+      };
+    }
+
+    leakBtn.addEventListener('click', () => {
+      if (interval) return;
+
+      console.log('开始创建内存泄漏...');
+      interval = setInterval(() => {
+        // 每次创建一个闭包并保存在数组中
+        const leaky = createLeakClosure();
+        leakyStore.push(leaky); // 不断增长，内存不会释放
+      }, 1000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+      console.log('停止创建泄漏');
+      clearInterval(interval);
+      interval = null;
+    });
+
+    cleanBtn.addEventListener('click', () => {
+      console.log('尝试清除闭包引用');
+      leakyStore = [];
+      // 如果你启用了 DevTools 的 GC，可以手动触发 GC
+      if (window.gc) window.gc();
+    });
+  </script>
+</body>
+</html>

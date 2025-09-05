@@ -1,0 +1,96 @@
+<!--
+ * @Author: ZJ Wu
+ * @Date: 2024-01-19 16:24:46
+ * @LastEditTime: 2024-05-27 17:02:45
+ * @Description: 
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        .myDiv {
+            width: 100px;
+            height: 100px;
+            margin: 50px;
+            background-color: blue;
+            position: relative;
+            animation: my-animation 5s linear infinite;
+        }
+
+        @keyframes my-animation {
+            from {
+                left: 0%;
+                rotate: 0deg;
+            }
+
+            to {
+                left: 100%;
+                rotate: 360deg;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="myDiv"></div>
+    <button onclick="longTask()">没有优化的方案</button>
+    <button onclick="timeoutTask()">setTimeout递归方案</button>
+    <button onclick="timeoutTask2(longTask)">setTimeout方案2</button>
+    <script>
+        // 模拟一个较为耗时的任务，大概10ms
+        function myFunc() {
+            const startTime = Date.now();
+            while (Date.now() - startTime < 10) { }
+        }
+
+        // 方案：直接调用。模拟大量小的耗时任务组合
+        // 答案：阻塞
+        function longTask() {
+            for (let i = 0; i < 300; i++) {
+                myFunc();
+            }
+        }
+
+
+
+        // 方案：setTimeout递归，人工地将耗时任务拆分为300个耗时操作 runTask(task)
+        // 答案：动画正常，任务执行正常，不过执行耗时较长。
+        // 原理：？？？
+        // 评价：1. 如果出现两个不同的任务的话，需要多个timeoutTask函数执行。
+        //      2. 可能会栈溢出。
+        //      3. 并且有更好的实践方案，参考02文件夹下的内容：自动next（执行分片任务，休眠，再次自动执行分片任务）
+        function timeoutTask(i, startTime) {
+            setTimeout(() => {
+                if (!startTime) {
+                    console.log("开始长任务");
+                    i = 0;
+                    startTime = Date.now();
+                }
+                if (i === 300) {
+                    console.log(`长任务结束,总耗时:${Date.now() - startTime}ms`);
+                    return;
+                }
+                myFunc();
+                timeoutTask(++i, startTime);
+            });
+        }
+
+        // 方案：假设耗时任务很难人工拆分，那么是否可以使用setTimeout来保证流畅的动画效果同时完成任务。
+        // 答案：阻塞
+        function timeoutTask2(task) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    task();
+                    resolve();
+                }, 0);
+            });
+        }
+
+    </script>
+</body>
+
+</html>

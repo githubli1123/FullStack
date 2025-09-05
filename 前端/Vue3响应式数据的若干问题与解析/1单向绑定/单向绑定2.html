@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单向绑定</title>
+</head>
+<body>
+    <input type="text" id="input"/>
+    <div id="txt" style="border: 1px solid #000; width: 200px; height: 200px; margin-top: 10px;"></div>
+    <script>
+        // 方式2
+        let input = document.getElementById('input');
+        let div = document.getElementById('txt');
+
+        let inputValue = input.value;
+        let txtValue = inputValue;
+
+        // 监听 inputValue 值的变化。这个已经由浏览器提供了
+        // 这个监听功能的代码运行在另一个线程
+
+    </script>
+</body>
+</html>

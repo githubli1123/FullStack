@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>渲染10万个点 动态改变样式</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css" />
+    <style>
+        html,
+        body,
+        #map {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <script>
+        let map;
+        //   污水管网
+        const url = "http://124.70.195.185:8080/geoserver/zhangzhou/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=zhangzhou:sewagepipeline&maxFeatures=50000&outputFormat=application/json";
+        fetch(url).then((res) => res.json()).then((json) => {
+            debugger;
+            initLayer(json);
+        });
+
+        function initLayer(geojson) {
+            const vectorSource = new ol.source.Vector({
+                features: new ol.format.GeoJSON().readFeatures(geojson, {
+                    featureProjection: "EPSG:3857",
+                }),
+            });
+            // 给每一个 feature 赋予默认属性时建议也用 set()
+            vectorSource.getFeatures().forEach((feature) => {
+                feature.set("highlightType", "notHighlight");
+            });
+            // 给每一个 feature 赋予一个 highlightType 字段，根据该字段来渲染图形 style
+            const vectorLayer = new ol.layer.WebGLVector({
+                source: vectorSource,
+                style: {
+                    "circle-radius": 2,
+                    "circle-fill-color": [
+                        "match",
+                        ["get", "highlightType"],
+                        "notHighlight",
+                        "rgba(25,25,25,0.5)",
+                        "highlight",
+                        "rgba(255, 0, 0, 0.5)",
+            /* default */ "rgba(255, 255, 0, 0.9)",
+                    ],
+                },
+                // styleVariables: {
+                //   notHighlightColor: "rgba(0, 255, 0, 0.9)", // 初始为绿色
+                //   highlightColor: "rgba(255, 0, 0, 0.9)", // 红色
+                // },
+            });
+            map = new ol.Map({
+                target: "map",
+                layers: [
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM() // OSM 底图
+                    }),
+                    // vectorLayer,
+                ],
+                // view: new ol.View({
+                //     // center: ol.proj.fromLonLat([116.3975, 39.9087]),
+                //     zoom: 14,
+                // }),
+            });
+
+            setTimeout(() => {
+                // 修改样式中的颜色
+                // vectorLayer.updateStyleVariables({
+                //   highlightColor: "rgba(255, 100, 200, 0.9)", // 改为红色
+                // });
+                // 修改 feature 中的属性，这个属性关联了样式会触发样式更新
+                // 按照你的规则来改变 highlightType ：找到 type 为 school 的 feature，并设置其 highlightType 为 highlight
+                vectorSource.getFeatures().forEach((feature) => {
+                    if (true || feature.getProperties().type === "school") {
+                        feature.setProperties({ highlightType: "highlight" });
+                    }
+                });
+                console.log("更新样式");
+            }, 3000);
+        }
+
+
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>使用分配时间轴找出 JS 堆内存泄漏</title>
+</head>
+
+<body>
+    <div>
+        分配时间轴是另一种可帮助您跟踪 JS 堆中的内存泄漏的工具。
+        为了演示分配时间轴，请考虑以下代码
+    </div>
+    <pre>
+            // var x = [];
+            // function create() {
+            //     console.log('向 x 数组添加一个包含 1_0000_0000 个字符的字符串');
+            //     x.push(new Array(1_0000_0000).join('x')); // 这里有优化，内存不会上涨，而且创建数组也非常快
+            //     console.log('创建完成');
+            // }
+            // document.getElementById('create').addEventListener('click', create);
+            const x = {};
+            function create() {
+                console.log('创建一个包含 10 个 li 子项的 ul 节点');
+                x['x'+'_'+Math.random()] = new Array(6000_0000).fill('x'+Math.random()); // 随机数据，拒绝优化
+                console.log('创建完成');
+            }
+            document.getElementById('create').addEventListener('click', create,{
+                once:true
+            });
+    </pre>
+
+    <p>
+        -----------------------------------------------------------------------------------------------------------
+    </p>
+    <div>
+        1. 按钮时，系统都会向 x 数组添加一个超级大的字符串数组。
+        <div>
+            2. 如需记录分配时间轴，请打开 DevTools，前往内存面板，选择时间轴上的分配单选按钮，按 radio_button_checked Record 按钮，
+            执行您怀疑会导致内存泄漏的操作，然后在完成后按 Stop recording 按钮。
+        </div>
+        <div>
+            3. 录制时，请注意分配时间轴上是否显示了任何蓝色条，这些蓝条表示新的内存分配。
+            这些新的内存分配是内存泄漏的候选项。您可以放大某个条状标签，以过滤构造函数窗格，仅显示在指定时间范围内分配的对象。
+        </div>
+        <div>
+            4. 展开相应对象，然后点击其值，即可在对象窗格中查看有关该对象的更多详细信息。
+            <span style="color:rgb(5, 126, 23)">
+                例如，通过查看新分配的对象的详细信息，您可以看到该对象已分配给 Window 作用域中的 x 变量。
+            </span>
+        </div>
+        <p>
+            ------------------------------------------------------------------------------------------------------------
+        </p>
+        <div><button id="create">点我向 x 添加一个超级大的字符串数组</button></div>
+        <script>
+            // var x = [];
+            // function create() {
+            //     console.log('向 x 数组添加一个包含 1_0000_0000 个字符的字符串');
+            //     x.push(new Array(1_0000_0000).join('x')); // 这里有优化，内存不会上涨，而且创建数组也非常快
+            //     console.log('创建完成');
+            // }
+            // document.getElementById('create').addEventListener('click', create);
+            const x = {};
+            function create() {
+                console.log('创建一个包含 10 个 li 子项的 ul 节点');
+                x['x'+'_'+Math.random()] = new Array(1000_0000).fill('x'+Math.random()); // 随机数据，拒绝优化
+                console.log('创建完成');
+            }
+            document.getElementById('create').addEventListener('click', create,{
+                once:true
+            });
+        </script>
+</body>
+
+</html>
